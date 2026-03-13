@@ -1,137 +1,97 @@
 # session-resume-helper
 
-`session-resume-helper` is a skill for safely continuing work from an old, split, bloated, stale, or interrupted session **without dragging the full transcript into a new one**.
+Agent skill for resuming work in a fresh session using only the minimum carry-forward context.
 
-Its job is simple:
-- restore the **minimum viable context**
-- prefer the **canonical summary** over raw history
-- check for the **most recent useful handoff**
-- recover only what the new session **must know right now**
+`session-resume-helper` is for the moment after you already know a session should be resumed, handed off, or restarted. It prevents a fresh session from inheriting transcript-sized baggage.
 
-This makes it useful when a session has become too large, repetitive, stale, or awkward to continue directly.
+## What it solves
 
-## What problem it solves
+When old sessions get large, repetitive, stale, or split across multiple branches, starting fresh is often the right move — but only if the right state is restored.
 
-Long-lived sessions tend to accumulate baggage:
-- repeated explanations
-- stale plans
-- abandoned branches
-- too much context for the next turn to use efficiently
-
-When that happens, starting fresh is often better — but only if the right context is carried forward.
-
-`session-resume-helper` helps create that compact bridge.
-
-## What it does
-
-The skill focuses on **resume and handoff**, not full diagnosis.
-
-It helps produce a compact continuation block containing:
-- current task
-- canonical source
-- what is done
-- what is currently true
-- blocker
+This skill restores only the minimum useful context:
+- canonical summary
+- done
+- remaining
 - next action
-- must-know constraints
+- blocker
+- important constraints
 
-It also provides a short **fresh-session opener** that can be pasted into a new session.
+## Core operating model
 
-## Design philosophy
+The skill assumes these session rules:
+- one task = one canonical session
+- old sessions may become `reference-only`
+- new sessions should load summary-level state, not full transcript replay
 
-### 1. Minimum context only
-Do not pour an old session into a new one.
+Preferred input order:
+1. canonical summary
+2. latest handoff block
+3. next action
+4. blocker
+5. done / remaining
+6. key decisions or constraints
+7. raw transcript fragments only if a gap remains
 
-Bring forward only what changes the next correct action.
-
-### 2. Canonical summary first
-If a canonical summary exists, use it as the primary resume artifact.
-
-Only add newer details if they materially changed the state after that summary.
-
-### 3. Recent handoff before raw transcript
-If a recent valid handoff already exists, prefer it over re-reading the full transcript.
-
-### 4. Restore only what this session must know
-The core question is:
-
-> What must the next session know in the first 30 seconds to avoid a wrong move?
-
-If something is merely nice to know, it usually should not be carried over.
-
-## Relationship to `session-manager`
-
-`session-resume-helper` works especially well with `session-manager`.
-
-- **`session-manager`** decides whether a session should remain active, be restarted, or become `reference-only`
-- **`session-resume-helper`** takes that decision and builds the smallest useful resume package for the next session
-
-A good mental model:
-- `session-manager` = diagnosis and lifecycle decision
-- `session-resume-helper` = handoff and resume packaging
-
-## Reference-only sessions
-
-This skill assumes an old session may already be marked `reference-only`.
-
-That means:
-- it may still contain useful history
-- it should not remain the active working memory
-- the new session should resume from summaries and handoffs, not from full transcript replay
-
-## Output shape
+## What it outputs
 
 Typical output:
 
 ```md
-Session Resume
-- Task:
-- Canonical source:
-- What is done:
-- What is currently true:
+Resume State
+- Canonical session:
+- Secondary/reference sessions:
+- Current task:
+- Stage:
+
+What I understand
+- Done:
+- Remaining:
 - Blocker:
-- Next action:
-- Must-know constraints:
+- Important constraints:
+
+Next action
+- ...
+
+Need from prior context?
+- none
 ```
 
-Typical fresh-session opener:
+This makes the fresh session stable from the first turn.
 
-```text
-This is a fresh continuation from an older session.
-Use the prior session as reference-only.
+## Relationship to `session-manager`
 
-Current task: ...
-What is already done: ...
-Current blocker: ...
-Next action: ...
-Must-know constraints: ...
+- **`session-manager`** decides whether a session should continue, hand off, restart, or become `reference-only`
+- **`session-resume-helper`** restores the smallest useful working state after that decision
+
+A practical pairing is:
+- 70–84%: `session-manager`
+- 85–89%: compression / handoff prep
+- 90%+: fresh session + `session-resume-helper`
+
+## Example prompts
+
+- "Start a fresh session from this summary."
+- "What should the new session restore first?"
+- "Make a resume prompt for the next session."
+- "Recover this task without replaying the whole chat."
+- “새 세션 첫 턴용 복원 프롬프트 만들어줘”
+- “이전 세션에서 뭘 가져오면 돼?”
+- “전문 다시 안 읽고 이어가게 해줘”
+
+## Install
+
+```bash
+npx -y skills add https://github.com/RichardHojunJang/session-resume-helper
+```
+
+Or explicitly:
+
+```bash
+npx -y skills add https://github.com/RichardHojunJang/session-resume-helper --skill session-resume-helper
 ```
 
 ## Files
 
-- `SKILL.md` — main skill behavior and resume workflow
-- `references/resume-schema.md` — stricter schema and field-by-field guidance
-
-## Good use cases
-
-Use this skill when:
-- a session became bloated and needs a clean restart
-- work is being handed off between sessions or agents
-- a previous session is stale, split, or partially interrupted
-- you want to preserve only the source of truth and next action
-- you need a compact resume block instead of transcript replay
-
-## Non-goals
-
-This skill is **not** primarily for:
-- broad session health diagnosis
-- deciding whether a session is bloated in the first place
-- full archive or transcript retention strategies
-
-Those decisions belong more naturally to `session-manager`.
-
-## Status
-
-Current version: initial working draft.
-
-It is designed to be small, opinionated, and easy to pair with `session-manager` for practical session recovery workflows.
+- `SKILL.md` — main resume workflow and minimal-restore rules
+- `references/resume-schema.md` — stricter schema and field guidance
+- `README.md` — overview and install instructions

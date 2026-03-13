@@ -1,150 +1,158 @@
 ---
 name: session-resume-helper
-description: Resume work safely from an old, split, bloated, stale, or interrupted session by restoring only the minimum context needed to continue. Use when starting a fresh session from prior work, handing off between sessions or agents, recovering after context bloat or repetition, or creating a compact handoff that preserves source of truth, recent progress, blockers, and next action without dragging full history forward.
+description: Resume work in a fresh or recovered session using minimal carry-forward context. Use when starting a new session from an older one, recovering after context bloat or errors, rebuilding state from a handoff summary, choosing what to restore first, or generating a stable first-turn resume prompt without rereading the full transcript.
 ---
 
 # Session Resume Helper
 
-Restore the **minimum viable context** needed to continue work in a fresh session.
+Resume work from a prior session without dragging the whole transcript forward.
 
-This skill is for **resuming**, not for full session diagnosis. Use it after you already know a session should be resumed, handed off, or restarted.
+## Core goal
 
-## Core rule
+Stabilize the **first turn of a fresh session**.
 
-Do not pour the old session into the new one.
-
-Bring forward only:
-- current task
+Carry forward only the minimum context needed to continue useful work:
 - canonical summary
-- most recent handoff
-- blocker
+- done
+- remaining
 - next action
-- any must-know constraints for this specific continuation
+- blocker
+- key constraints
 
-If something is merely nice-to-know, leave it behind.
+Do **not** default to replaying the entire previous conversation.
 
-Assume the old session may be marked `reference-only`.
-That means: it may still inform the resume, but it should not be treated as the active working memory for the new session.
+## Inputs
+
+Prefer these inputs in this order:
+1. canonical summary
+2. latest handoff block
+3. next action
+4. blocker
+5. done / remaining
+6. key decisions or constraints
+7. raw transcript fragments only if a gap remains
+
+If the full transcript exists but a good summary exists too, use the summary first.
 
 ## Resume workflow
 
-### 1) Identify the source of truth
-Find the canonical source before writing any resume summary.
+### 1) Establish source of truth
+Identify:
+- canonical session
+- secondary/reference sessions
+- whether ownership is clear
 
-Prefer, in order:
-1. an explicit canonical summary
-2. the latest valid handoff/resume block
-3. the current session's most recent stable conclusion
-4. only if needed, a short scan of recent turns for unresolved changes
+If canonical status is unclear, say so before proceeding.
 
-If there are conflicting summaries, name the conflict instead of inventing certainty.
-
-### 2) Restore minimum context only
-When starting a fresh session, restore only what the next worker must know immediately.
-
-Default restore set:
-- what the task is
-- what is already done
-- what is currently true
-- what is blocked
-- what should happen next
-
-Do **not** reload:
-- old brainstorming unless it still affects the next action
-- repeated background explanations
-- superseded plans
-- full transcript-style history
-
-### 3) Load the canonical summary first
-If a canonical summary exists, treat it as the primary resume artifact.
-
-Use it to anchor:
-- current task
-- source of truth
-- latest accepted decisions
-- active blocker
+### 2) Restore minimal state
+Reconstruct only:
+- task
+- stage
+- done
+- remaining
 - next action
+- blocker
+- important constraints
 
-Only add recent details if they materially changed the state after the canonical summary was written.
+Avoid importing exploratory noise or repeated explanations.
 
-### 4) Check for a recent handoff automatically
-Before writing a new resume block, check whether a recent handoff already exists.
+### 3) Start with a controlled first response
+The first reply in the new session should do three things:
+- restate the understood current state
+- state the next action it will take
+- ask for missing context only if required
 
-Prefer the most recent handoff when it is:
-- still aligned with the canonical summary
-- not contradicted by newer work
-- specific enough to act on immediately
+### 4) Escalate only if needed
+Only consult raw history when:
+- the summary conflicts with itself
+- the next action depends on missing specifics
+- canonical status is ambiguous
+- a blocker cannot be resolved from the handoff
 
-If a recent handoff exists but is stale, update it instead of duplicating it.
+---
 
-If the old session is marked `reference-only`, treat the recent handoff as a higher-priority resume artifact than the raw transcript.
+## First-turn output format
 
-### 5) Reconstruct only “what this session must know”
-Ask:
-- What must the new session know in the first 30 seconds?
-- What would cause a wrong move if omitted?
-- What is the single next useful action?
-
-Build the resume output around that.
-
-## Resume output format
-
-Use this default structure:
+Use this default structure when resuming:
 
 ```md
-Session Resume
-- Task:
-- Canonical source:
-- What is done:
-- What is currently true:
+Resume State
+- Canonical session:
+- Secondary/reference sessions:
+- Current task:
+- Stage:
+
+What I understand
+- Done:
+- Remaining:
 - Blocker:
-- Next action:
-- Must-know constraints:
+- Important constraints:
+
+Next action
+- ...
+
+Need from prior context?
+- none
 ```
 
-If the old session should no longer be used actively, append:
+If more context is required, replace the last line with a short, precise request.
 
-```md
-Old Session Status
-- Status: reference-only
-- Reason:
-```
+## Minimal restore rules
 
-## Fresh-session opener
+Always prefer this restore set:
+- canonical summary
+- done
+- remaining
+- next action
+- blocker
+- key constraints
 
-When the user wants a ready-to-send opener for the new session, use this shape:
+Avoid default inclusion of:
+- full transcript
+- multiple competing summaries
+- long social or conversational filler
+- duplicate status recaps
 
-```text
-This is a fresh continuation from an older session.
-Use the prior session as reference-only.
+## Canonical-session rules
 
-Current task: ...
-What is already done: ...
-Current blocker: ...
-Next action: ...
-Must-know constraints: ...
-```
+For a single task:
+- prefer one canonical session
+- keep other sessions reference-only unless active reconciliation is needed
+- if the fresh session becomes the new canonical session, say so explicitly
 
-Keep it short. A fresh session opener should usually fit in 5-8 lines.
+## Handoff compatibility
+
+This skill works best when the input summary uses fields like:
+- canonical session
+- secondary/reference sessions
+- current task
+- stage
+- key decisions
+- done
+- remaining
+- next action
+- blocker
+- important constraints
+
+If the handoff is missing fields, infer conservatively and mark uncertainty.
 
 ## Guardrails
 
-- Do not dump transcript history into the new session unless the user explicitly asks.
-- Do not treat the latest message as authoritative if a canonical summary says otherwise.
-- Do not create a new handoff block when the current one is still valid and sufficient.
-- Do not restore old context that does not change the next action.
-- If source of truth is ambiguous, say so explicitly and name the conflict.
+- Do not ask the next session to reread everything by default.
+- Do not pretend ambiguity is resolved when it is not.
+- Do not carry over stale or superseded plans as if they were current.
+- Do not expand a concise handoff back into transcript-sized context.
 
-## When the old session is unhealthy
+## Example user requests
 
-If the old session is bloated, repetitive, stale, or degraded:
-- prefer that `session-manager` classify it `reference-only`
-- extract only the canonical summary plus the latest meaningful delta
-- start the new session from the resume block, not from the old transcript
+- "Start a fresh session from this summary."
+- "What should the new session read first?"
+- "Make a resume prompt for the next session."
+- "Recover this task without replaying the whole chat."
+- “새 세션 첫 턴용 복원 프롬프트 만들어줘”
+- “이전 세션에서 뭘 가져오면 돼?”
+- “전문 다시 안 읽고 이어가게 해줘”
 
-Do not decide session lifecycle here unless needed for clarity. Prefer to inherit the lifecycle judgment from `session-manager`, then resume from that decision.
+## Final definition
 
-## Reference file
-
-For a more opinionated resume schema and selection rules, read:
-- `references/resume-schema.md`
+This skill turns a prior session's summary or handoff into a **stable fresh-session starting state** and a **minimal resume prompt**.
