@@ -11,8 +11,16 @@ A resume block should let a new session become productive quickly without inheri
 When multiple artifacts exist, prefer them in this order:
 1. canonical summary
 2. recent valid handoff
-3. latest stable decision block
-4. recent turns containing unresolved changes
+3. archive/reference summary created during preserve-then-reset
+4. latest stable decision block
+5. recent turns containing unresolved changes
+
+## Preserve-then-reset resume rule
+
+When a large session was archived and removed from the active store:
+- prefer the archive/reference summary over reopening the full transcript
+- use the archived transcript only when the summary or handoff is missing something material
+- treat the newly created session as the canonical working session unless the handoff says otherwise
 
 ## Minimum viable resume
 

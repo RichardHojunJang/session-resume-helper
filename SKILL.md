@@ -26,11 +26,12 @@ Do **not** default to replaying the entire previous conversation.
 Prefer these inputs in this order:
 1. canonical summary
 2. latest handoff block
-3. next action
-4. blocker
-5. done / remaining
-6. key decisions or constraints
-7. raw transcript fragments only if a gap remains
+3. archive/reference summary created during preserve-then-reset
+4. next action
+5. blocker
+6. done / remaining
+7. key decisions or constraints
+8. raw transcript fragments only if a gap remains
 
 If the full transcript exists but a good summary exists too, use the summary first.
 
@@ -68,6 +69,11 @@ Only consult raw history when:
 - the next action depends on missing specifics
 - canonical status is ambiguous
 - a blocker cannot be resolved from the handoff
+
+If the old session was archived and reset out of the active store:
+- prefer the archive/reference summary over reopening the full transcript
+- use the archived transcript only when the summary or handoff is materially incomplete
+- treat the newly created session as the working session unless the handoff says otherwise
 
 ---
 
